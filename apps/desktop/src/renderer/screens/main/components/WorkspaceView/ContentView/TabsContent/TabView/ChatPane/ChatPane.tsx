@@ -73,14 +73,14 @@ export function ChatPane({
 	const chatContainerRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		if (isActiveTab && !prevIsActiveTabRef.current) {
+		if (isActiveTab && !prevIsActiveTabRef.current && isFocused) {
 			const textarea = chatContainerRef.current?.querySelector<HTMLTextAreaElement>(
 				"[data-slot=input-group-control]",
 			);
 			textarea?.focus();
 		}
 		prevIsActiveTabRef.current = isActiveTab;
-	}, [isActiveTab]);
+	}, [isActiveTab, isFocused]);
 	const equalizePaneSplits = useTabsStore((s) => s.equalizePaneSplits);
 	const paneName = useTabsStore((s) => s.panes[paneId]?.name ?? "New Chat");
 	const setTabAutoTitle = useTabsStore((s) => s.setTabAutoTitle);
