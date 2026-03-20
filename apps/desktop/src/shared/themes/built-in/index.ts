@@ -1,11 +1,19 @@
 import type { Theme } from "../types";
+import { canopyDarkTheme } from "./canopy-dark";
+import { canopyLightTheme } from "./canopy-light";
 import { darkTheme } from "./ember";
 import { lightTheme } from "./light";
 import { monokaiTheme } from "./monokai";
 /**
  * All built-in themes
  */
-export const builtInThemes: Theme[] = [darkTheme, lightTheme, monokaiTheme];
+export const builtInThemes: Theme[] = [
+	darkTheme,
+	lightTheme,
+	monokaiTheme,
+	canopyDarkTheme,
+	canopyLightTheme,
+];
 
 /**
  * Default theme ID
@@ -20,4 +28,4 @@ export function getBuiltInTheme(id: string): Theme | undefined {
 }
 
 // Re-export individual themes
-export { darkTheme, lightTheme, monokaiTheme };
+export { darkTheme, lightTheme, monokaiTheme, canopyDarkTheme, canopyLightTheme };
