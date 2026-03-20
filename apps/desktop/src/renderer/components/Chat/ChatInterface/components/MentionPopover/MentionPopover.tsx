@@ -122,6 +122,11 @@ export function MentionProvider({
 		textInput.setInput(`${before}@${relativePath} ${after}`);
 		setTriggerIndex(-1);
 		setOpen(false);
+		requestAnimationFrame(() => {
+			document
+				.querySelector<HTMLTextAreaElement>("[data-slot=input-group-control]")
+				?.focus();
+		});
 	};
 
 	const handleOpenChange = (nextOpen: boolean) => {
