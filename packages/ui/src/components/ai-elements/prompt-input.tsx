@@ -276,7 +276,14 @@ export function PromptInputProvider({
 			__registerFileInput,
 			__registerTextarea,
 		}),
-		[textInput, clearInput, focus, attachments, __registerFileInput, __registerTextarea],
+		[
+			textInput,
+			clearInput,
+			focus,
+			attachments,
+			__registerFileInput,
+			__registerTextarea,
+		],
 	);
 
 	return (

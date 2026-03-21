@@ -8,13 +8,11 @@ import { useAppHotkey } from "renderer/stores/hotkeys";
 interface ChatShortcutsProps {
 	isFocused: boolean;
 	setIssueLinkOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	inputRootRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function ChatShortcuts({
 	isFocused,
 	setIssueLinkOpen,
-	inputRootRef,
 }: ChatShortcutsProps) {
 	const attachments = usePromptInputAttachments();
 	const { textInput } = usePromptInputController();
