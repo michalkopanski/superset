@@ -230,7 +230,7 @@ export function ChatPaneInterface({
 	const currentMcpScopeRef = useRef<string | null>(null);
 	const consumedLaunchConfigRef = useRef<string | null>(null);
 	const isSendingRef = useRef(false);
-	const sessionInitializedRef = useRef(false);
+	const previousSessionIdRef = useRef(sessionId);
 	const autoLaunchInFlightRef = useRef<string | null>(null);
 	const autoLaunchAttemptsRef = useRef<Record<string, number>>({});
 	const autoLaunchSessionLockRef = useRef<Record<string, string | null>>({});
@@ -454,15 +454,19 @@ export function ChatPaneInterface({
 		}
 	}, [cwd, refreshMcpOverview, resetMcpUi, sessionId]);
 
-	useEffect(() => {
-		if (!sessionInitializedRef.current) {
-			sessionInitializedRef.current = true;
-			return;
-		}
+	const clearDraftInStore = useCallback(() => {
 		const { panes, setChatLaunchConfig } = useTabsStore.getState();
-		const currentConfig = panes[paneId]?.chat?.launchConfig ?? null;
-		setChatLaunchConfig(paneId, { ...currentConfig, draftInput: undefined });
-	}, [paneId, sessionId]);
+		setChatLaunchConfig(paneId, {
+			...(panes[paneId]?.chat?.launchConfig ?? null),
+			draftInput: undefined,
+		});
+	}, [paneId]);
+
+	useEffect(() => {
+		if (sessionId === previousSessionIdRef.current) return;
+		previousSessionIdRef.current = sessionId;
+		clearDraftInStore();
+	}, [clearDraftInStore, sessionId]);
 
 	useEffect(() => {
 		if (
@@ -656,12 +660,7 @@ export function ChatPaneInterface({
 				turn_number: (messages?.length ?? 0) + 1,
 			});
 
-			const { panes: panesSnap, setChatLaunchConfig: setLaunchConfig } =
-				useTabsStore.getState();
-			setLaunchConfig(paneId, {
-				...(panesSnap[paneId]?.chat?.launchConfig ?? null),
-				draftInput: undefined,
-			});
+			clearDraftInStore();
 		},
 		[
 			activeModel?.id,
@@ -678,7 +677,7 @@ export function ChatPaneInterface({
 			setRuntimeErrorMessage,
 			onUserMessageSubmitted,
 			thinkingLevel,
-			paneId,
+			clearDraftInStore,
 		],
 	);
 
@@ -885,12 +884,7 @@ export function ChatPaneInterface({
 					restarted_from_message_id: request.messageId,
 				});
 
-				const { panes: panesSnap, setChatLaunchConfig: setLaunchConfig } =
-					useTabsStore.getState();
-				setLaunchConfig(paneId, {
-					...(panesSnap[paneId]?.chat?.launchConfig ?? null),
-					draftInput: undefined,
-				});
+				clearDraftInStore();
 			} catch (error) {
 				isSendingRef.current = false;
 				setPendingUserTurn(null);
@@ -912,7 +906,7 @@ export function ChatPaneInterface({
 			sessionId,
 			setRuntimeErrorMessage,
 			thinkingLevel,
-			paneId,
+			clearDraftInStore,
 		],
 	);
 	const handleResendUserMessage = useCallback(
@@ -992,7 +986,11 @@ export function ChatPaneInterface({
 
 	return (
 		<PromptInputProvider initialInput={initialLaunchConfig?.draftInput}>
-			<DraftSaver paneId={paneId} isSendingRef={isSendingRef} />
+			<DraftSaver
+				paneId={paneId}
+				sessionId={sessionId}
+				isSendingRef={isSendingRef}
+			/>
 			<div className="flex h-full flex-col bg-background">
 				<ChatMessageList
 					messages={visibleMessages}

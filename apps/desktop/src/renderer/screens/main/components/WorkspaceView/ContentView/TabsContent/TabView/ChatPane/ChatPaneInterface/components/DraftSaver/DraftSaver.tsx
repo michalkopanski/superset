@@ -5,6 +5,7 @@ import { useTabsStore } from "renderer/stores/tabs/store";
 
 interface DraftSaverProps {
 	paneId: string;
+	sessionId: string | null;
 	isSendingRef: React.RefObject<boolean>;
 }
 
@@ -15,20 +16,33 @@ interface DraftSaverProps {
  * Uses refs for all mutable values so the unmount cleanup always reads the latest
  * state without re-registering the effect on every render.
  */
-export function DraftSaver({ paneId, isSendingRef }: DraftSaverProps) {
-	const { textInput } = usePromptInputController();
+export function DraftSaver({
+	paneId,
+	sessionId,
+	isSendingRef,
+}: DraftSaverProps) {
+	const { textInput, attachments } = usePromptInputController();
 	const textRef = useRef(textInput.value);
 	const paneIdRef = useRef(paneId);
+	const previousSessionIdRef = useRef(sessionId);
 
 	// Synchronous ref updates so the unmount cleanup always reads the latest values
 	textRef.current = textInput.value;
 	paneIdRef.current = paneId;
+	if (isSendingRef.current && textInput.value.length === 0) {
+		isSendingRef.current = false;
+	}
+
+	useEffect(() => {
+		if (sessionId === previousSessionIdRef.current) return;
+		previousSessionIdRef.current = sessionId;
+		textInput.clear();
+		attachments.clear();
+	}, [attachments.clear, sessionId, textInput.clear]);
 
 	useEffect(() => {
 		return () => {
-			const wasSending = isSendingRef.current;
-			isSendingRef.current = false; // reset so the next draft-save cycle works
-			if (wasSending) return;
+			if (isSendingRef.current) return;
 			const id = paneIdRef.current;
 			const draft = textRef.current;
 			const { panes, setChatLaunchConfig } = useTabsStore.getState();
