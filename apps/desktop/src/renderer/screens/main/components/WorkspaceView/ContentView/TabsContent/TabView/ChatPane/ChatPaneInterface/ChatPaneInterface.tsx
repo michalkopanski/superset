@@ -547,70 +547,72 @@ export function ChatPaneInterface({
 			setSubmitStatus("submitted");
 			clearRuntimeError();
 
-			let preparedFiles = payload.files;
 			let effectiveSessionId = sessionId;
-
-			if (preparedFiles?.some((file) => file.uploaded === false)) {
-				if (!effectiveSessionId) {
-					const startResult = await onStartFreshSession();
-					if (!startResult.created || !startResult.sessionId) {
-						throw new Error(
-							startResult.errorMessage ??
-								"Failed to create a chat session. Please retry.",
-						);
-					}
-					effectiveSessionId = startResult.sessionId;
-				}
-
-				const uploadedFiles = await uploadFiles(
-					effectiveSessionId,
-					preparedFiles.map((file) => ({
-						type: "file",
-						url: file.data,
-						mediaType: file.mediaType,
-						filename: file.filename,
-					})),
-				);
-				preparedFiles = uploadedFiles.map((file) => ({
-					data: file.url,
-					mediaType: file.mediaType,
-					filename: file.filename,
-					uploaded: true,
-				}));
-			}
-
-			const sendInput: ChatSendMessageInput = {
-				payload: {
-					content,
-					...(preparedFiles?.length
-						? {
-								files: preparedFiles.map(({ data, filename, mediaType }) => ({
-									data,
-									mediaType,
-									filename,
-								})),
-							}
-						: {}),
-				},
-				metadata: {
-					model: activeModel?.id,
-					thinkingLevel,
-				},
-			};
-			const immediateUserMessage =
-				effectiveSessionId && !isSessionReady
-					? toOptimisticUserMessage(sendInput)
-					: null;
-			if (immediateUserMessage) {
-				setPendingUserTurn({
-					kind: "append",
-					message: immediateUserMessage,
-				});
-			}
-
-			isSendingRef.current = true;
+			let immediateUserMessage: ReturnType<
+				typeof toOptimisticUserMessage
+			> | null = null;
 			let targetSessionId = effectiveSessionId;
 			try {
+				let preparedFiles = payload.files;
+				if (preparedFiles?.some((file) => file.uploaded === false)) {
+					if (!effectiveSessionId) {
+						const startResult = await onStartFreshSession();
+						if (!startResult.created || !startResult.sessionId) {
+							throw new Error(
+								startResult.errorMessage ??
+									"Failed to create a chat session. Please retry.",
+							);
+						}
+						effectiveSessionId = startResult.sessionId;
+					}
+
+					const uploadedFiles = await uploadFiles(
+						effectiveSessionId,
+						preparedFiles.map((file) => ({
+							type: "file",
+							url: file.data,
+							mediaType: file.mediaType,
+							filename: file.filename,
+						})),
+					);
+					preparedFiles = uploadedFiles.map((file) => ({
+						data: file.url,
+						mediaType: file.mediaType,
+						filename: file.filename,
+						uploaded: true,
+					}));
+				}
+
+				const sendInput: ChatSendMessageInput = {
+					payload: {
+						content,
+						...(preparedFiles?.length
+							? {
+									files: preparedFiles.map(({ data, filename, mediaType }) => ({
+										data,
+										mediaType,
+										filename,
+									})),
+								}
+							: {}),
+					},
+					metadata: {
+						model: activeModel?.id,
+						thinkingLevel,
+					},
+				};
+				immediateUserMessage =
+					effectiveSessionId && !isSessionReady
+						? toOptimisticUserMessage(sendInput)
+						: null;
+				if (immediateUserMessage) {
+					setPendingUserTurn({
+						kind: "append",
+						message: immediateUserMessage,
+					});
+				}
+
+				isSendingRef.current = true;
 				const sendResult =
 					effectiveSessionId && effectiveSessionId !== sessionId
 						? {
@@ -639,9 +641,10 @@ export function ChatPaneInterface({
 				setSubmitStatus(undefined);
 				setRuntimeErrorMessage(sendErrorMessage);
 				if (immediateUserMessage) {
+					const failedImmediateUserMessage = immediateUserMessage;
 					setPendingUserTurn((previousTurn) =>
 						previousTurn?.kind === "append" &&
-						previousTurn.message.id === immediateUserMessage.id
+						previousTurn.message.id === failedImmediateUserMessage.id
 							? null
 							: previousTurn,
 					);
@@ -854,7 +857,6 @@ export function ChatPaneInterface({
 				});
 			}
 
-			isSendingRef.current = true;
 			try {
 				await chatRuntimeServiceTrpcUtils.client.session.restartFromMessage.mutate(
 					{
@@ -886,7 +888,6 @@ export function ChatPaneInterface({
 
 				clearDraftInStore();
 			} catch (error) {
-				isSendingRef.current = false;
 				setPendingUserTurn(null);
 				const sendErrorMessage = toSendFailureMessage(error);
 				setSubmitStatus(undefined);
