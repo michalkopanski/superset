@@ -20,17 +20,15 @@ export function DraftSaver({ paneId, isSendingRef }: DraftSaverProps) {
 	const textRef = useRef(textInput.value);
 	const paneIdRef = useRef(paneId);
 
-	useEffect(() => {
-		textRef.current = textInput.value;
-	}, [textInput.value]);
-
-	useEffect(() => {
-		paneIdRef.current = paneId;
-	}, [paneId]);
+	// Synchronous ref updates so the unmount cleanup always reads the latest values
+	textRef.current = textInput.value;
+	paneIdRef.current = paneId;
 
 	useEffect(() => {
 		return () => {
-			if (isSendingRef.current) return;
+			const wasSending = isSendingRef.current;
+			isSendingRef.current = false; // reset so the next draft-save cycle works
+			if (wasSending) return;
 			const id = paneIdRef.current;
 			const draft = textRef.current;
 			const { panes, setChatLaunchConfig } = useTabsStore.getState();

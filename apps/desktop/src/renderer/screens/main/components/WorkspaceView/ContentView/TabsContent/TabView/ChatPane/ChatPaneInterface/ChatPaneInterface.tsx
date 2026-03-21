@@ -462,7 +462,7 @@ export function ChatPaneInterface({
 		const { panes, setChatLaunchConfig } = useTabsStore.getState();
 		const currentConfig = panes[paneId]?.chat?.launchConfig ?? null;
 		setChatLaunchConfig(paneId, { ...currentConfig, draftInput: undefined });
-	}, [paneId]);
+	}, [paneId, sessionId]);
 
 	useEffect(() => {
 		if (
