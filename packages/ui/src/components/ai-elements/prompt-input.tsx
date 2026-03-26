@@ -155,7 +155,11 @@ export function PromptInputProvider({
 	const clearInput = useCallback(() => setTextInput(""), []);
 	const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 	const focus = useCallback(() => {
-		textareaRef.current?.focus();
+		const el = textareaRef.current;
+		if (!el) return;
+		el.focus();
+		const len = el.value.length;
+		el.setSelectionRange(len, len);
 	}, []);
 	const __registerTextarea = useCallback(
 		(ref: RefObject<HTMLTextAreaElement | null>) => {
