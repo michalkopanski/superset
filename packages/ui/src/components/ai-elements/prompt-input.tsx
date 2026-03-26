@@ -960,6 +960,14 @@ export const PromptInputTextarea = ({
 	}, [controller]);
 
 	const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
+		// Prevent modifier+arrow combos from bubbling to pane-navigation hotkeys
+		if (
+			(e.key === "ArrowLeft" || e.key === "ArrowRight") &&
+			(e.metaKey || e.ctrlKey)
+		) {
+			e.stopPropagation();
+		}
+
 		if (e.key === "Enter") {
 			if (isComposing || e.nativeEvent.isComposing) {
 				return;
