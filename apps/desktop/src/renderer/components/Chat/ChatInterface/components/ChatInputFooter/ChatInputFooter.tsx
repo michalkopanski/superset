@@ -4,13 +4,13 @@ import {
 	PromptInputAttachments,
 	type PromptInputMessage,
 	PromptInputTextarea,
-	usePromptInputController,
 } from "@superset/ui/ai-elements/prompt-input";
 import type { ThinkingLevel } from "@superset/ui/ai-elements/thinking-toggle";
 import type { ChatStatus, FileUIPart } from "ai";
 import type React from "react";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useFocusPromptOnPane } from "renderer/components/Chat/ChatInterface/hooks/useFocusPromptOnPane";
 import { useHotkeyText } from "renderer/stores/hotkeys";
 import type { SlashCommand } from "../../hooks/useSlashCommands";
 import type { ModelOption, PermissionMode } from "../../types";
@@ -75,18 +75,12 @@ export function ChatInputFooter({
 	onStop,
 	onSlashCommandSend,
 }: ChatInputFooterProps) {
-	const { textInput } = usePromptInputController();
+	useFocusPromptOnPane(isFocused);
 	const [issueLinkOpen, setIssueLinkOpen] = useState(false);
 	const [linkedIssues, setLinkedIssues] = useState<LinkedIssue[]>([]);
 	const inputRootRef = useRef<HTMLDivElement>(null);
 	const errorMessage = getErrorMessage(error);
 	const focusShortcutText = useHotkeyText("FOCUS_CHAT_INPUT");
-
-	useEffect(() => {
-		if (isFocused) {
-			textInput.focus();
-		}
-	}, [isFocused, textInput]);
 	const showFocusHint = focusShortcutText !== "Unassigned";
 
 	const addLinkedIssue = useCallback(
