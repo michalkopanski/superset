@@ -225,6 +225,11 @@ export function ChatPaneInterface({
 	const [approvalResponsePending, setApprovalResponsePending] = useState(false);
 	const [planResponsePending, setPlanResponsePending] = useState(false);
 	const [questionResponsePending, setQuestionResponsePending] = useState(false);
+	const [footerScrollTrigger, setFooterScrollTrigger] = useState(0);
+	const bumpFooterScroll = useCallback(
+		() => setFooterScrollTrigger((n) => n + 1),
+		[],
+	);
 	const [editingUserMessageId, setEditingUserMessageId] = useState<
 		string | null
 	>(null);
@@ -494,6 +499,11 @@ export function ChatPaneInterface({
 		}
 		setSubmitStatus(undefined);
 	}, [isRunning]);
+
+	// Scroll chat to bottom whenever the footer question overlay appears, changes, or disappears
+	useEffect(() => {
+		bumpFooterScroll();
+	}, [pendingQuestion?.questionId, pendingQuestion?.question, bumpFooterScroll]);
 
 	useEffect(() => {
 		onRawSnapshotChange?.({
@@ -903,6 +913,7 @@ export function ChatPaneInterface({
 			const trimmedAnswer = answer.trim();
 			if (!trimmedQuestionId || !trimmedAnswer) return;
 			clearRuntimeError();
+			bumpFooterScroll();
 			setQuestionResponsePending(true);
 			try {
 				await commands.respondToQuestion({
@@ -915,7 +926,7 @@ export function ChatPaneInterface({
 				setQuestionResponsePending(false);
 			}
 		},
-		[clearRuntimeError, commands],
+		[bumpFooterScroll, clearRuntimeError, commands],
 	);
 
 	const errorMessage = runtimeError ?? toErrorMessage(error);
@@ -950,6 +961,7 @@ export function ChatPaneInterface({
 					onCancelEditUserMessage={() => setEditingUserMessageId(null)}
 					onSubmitEditedUserMessage={handleSubmitEditedUserMessage}
 					onRestartUserMessage={handleResendUserMessage}
+					footerScrollTrigger={footerScrollTrigger}
 				/>
 				<McpControls mcpUi={mcpUi} />
 				<ChatUploadFooter
@@ -978,7 +990,10 @@ export function ChatPaneInterface({
 					pendingQuestion={pendingQuestion}
 					isQuestionSubmitting={questionResponsePending}
 					onQuestionRespond={handleQuestionResponse}
-					onQuestionCancel={() => void stopActiveResponse()}
+					onQuestionCancel={() => {
+						bumpFooterScroll();
+						void stopActiveResponse();
+					}}
 				/>
 			</div>
 		</PromptInputProvider>
