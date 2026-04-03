@@ -3,6 +3,7 @@ import { HiOutlineWifi } from "react-icons/hi2";
 import { useOnlineStatus } from "renderer/hooks/useOnlineStatus";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { getWorkspaceDisplayName } from "renderer/lib/getWorkspaceDisplayName";
+import { ActionsButton } from "./components/ActionsButton";
 import { NavigationControls } from "./components/NavigationControls";
 import { OpenInMenuButton } from "./components/OpenInMenuButton";
 import { OrganizationDropdown } from "./components/OrganizationDropdown";
@@ -72,6 +73,13 @@ export function TopBar() {
 						<HiOutlineWifi className="size-3.5" />
 						<span>Offline</span>
 					</div>
+				)}
+				{!isV2WorkspaceRoute && workspaceId && (
+					<ActionsButton
+						workspaceId={workspaceId}
+						projectId={workspace?.project?.id ?? workspace?.projectId}
+						worktreePath={workspace?.worktreePath}
+					/>
 				)}
 				{isV2WorkspaceRoute ? (
 					<V2WorkspaceOpenInButton workspaceId={v2WorkspaceId} />
